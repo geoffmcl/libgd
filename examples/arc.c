@@ -1,7 +1,12 @@
 /* $Id$ */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 #include "gd.h"
 #include <stdio.h>
 #include <stdlib.h>
+
+const char *out_file = "tempb.png";
 
 int main()
 {
@@ -13,18 +18,19 @@ int main()
 
 	gdImageFilledArc (im, cor_rad, 399 - cor_rad, cor_rad *2, cor_rad *2, 90, 180, 0x0, gdPie);
 
-	fp = fopen("b.png", "wb");
+#ifdef HAVE_LIBPNG
+	fp = fopen(out_file, "wb");
 	if (!fp) {
-		fprintf(stderr, "Can't save png image.\n");
+		fprintf(stderr, "Can't save png image to %s.\n", out_file);
 		gdImageDestroy(im);
 		return 1;
 	}
-#ifdef HAVE_LIBPNG
 	gdImagePng(im, fp);
-#else
-	printf("No PNG support. Cannot save image.\n");
-#endif
 	fclose(fp);
+	fprintf(stderr, "PNG image written to %s.\n", out_file);
+#else
+	fprintf(stderr, "No PNG support. Cannot save image.\n");
+#endif
 
 	gdImageDestroy(im);
 	return 0;

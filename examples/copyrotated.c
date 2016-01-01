@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <math.h>
 
+const char *out_file = "temprot.png";
+
 gdImagePtr loadImage(const char *name)
 {
 	FILE *fp;
@@ -11,7 +13,7 @@ gdImagePtr loadImage(const char *name)
 
 	fp = fopen(name, "rb");
 	if (!fp) {
-		fprintf(stderr, "Can't open jpeg file\n");
+		fprintf(stderr, "Can't open jpeg file %s\n", name);
 		return NULL;
 	}
 
@@ -25,7 +27,7 @@ int savePngImage(gdImagePtr im, const char *name)
 	FILE *fp;
 	fp = fopen(name, "wb");
 	if (!fp) {
-		fprintf(stderr, "Can't save png image fromtiff.png\n");
+		fprintf(stderr, "Can't save png image %s\n", name);
 		return 0;
 	}
 	gdImagePng(im, fp);
@@ -40,14 +42,14 @@ int main(int argc, char **arg)
 	double angle, a2;
 
 	if (argc < 3) {
-		fprintf(stderr, "Usage: copyrotated [angle in degree] [filename.png]\n");
+		fprintf(stderr, "Usage: copyrotated angle-in-degree filename.jpg\n");
 		return 1;
 	}
 	angle = strtod(arg[1], 0);
 	im = loadImage(arg[2]);
 
 	if (!im) {
-		fprintf(stderr, "Can't load PNG file <%s>", arg[1]);
+		fprintf(stderr, "Can't load JPG file <%s>\n", arg[2]);
 		return 1;
 	}
 
@@ -60,15 +62,15 @@ int main(int argc, char **arg)
 	/* to radian */
 	a2 = angle * .0174532925;
 
-	new_width = ceil(cos(a2) * gdImageSX(im)) +
-	            fabs(sin(a2) * gdImageSY(im));
-	new_height = ceil(cos(a2) * gdImageSY(im)) +
-	             fabs(sin(a2) * gdImageSX(im));
+	new_width = (int)(ceil(cos(a2) * gdImageSX(im)) +
+	            fabs(sin(a2) * gdImageSY(im)));
+	new_height = (int)(ceil(cos(a2) * gdImageSY(im)) +
+	             fabs(sin(a2) * gdImageSX(im)));
 
 
 	im2 = gdImageCreateTrueColor(new_width, new_height);
 	if (!im2) {
-		fprintf(stderr, "Can't create a new image");
+		fprintf(stderr, "Can't create a new image!\n");
 		gdImageDestroy(im);
 		return 1;
 	}
@@ -76,10 +78,10 @@ int main(int argc, char **arg)
 	gdImageAlphaBlending(im2, 0);
 	gdImageFilledRectangle(im2, 0, 0, gdImageSX(im2), gdImageSY(im2), gdTrueColorAlpha(127,0,0,127));
 
-	gdImageCopyRotated(im2, im, new_width/2, new_height/2, 0, 0, gdImageSX(im), gdImageSY(im), angle);
+	gdImageCopyRotated(im2, im, new_width/2, new_height/2, 0, 0, gdImageSX(im), gdImageSY(im), (int)angle);
 	gdImageSaveAlpha(im2, 1);
-	if (!savePngImage(im2, "rotated.png")) {
-		fprintf(stderr, "Can't save PNG file rotated.png");
+	if (!savePngImage(im2, out_file)) {
+		fprintf(stderr, "Can't save PNG file %s.\n", out_file);
 		gdImageDestroy(im);
 		gdImageDestroy(im2);
 		return 1;
@@ -87,5 +89,7 @@ int main(int argc, char **arg)
 
 	gdImageDestroy(im2);
 	gdImageDestroy(im);
+	fprintf(stderr, "Saved PNG file %s.\n", out_file);
+
 	return 0;
 }
